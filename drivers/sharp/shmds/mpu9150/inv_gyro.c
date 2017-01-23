@@ -154,14 +154,16 @@ static void shmds_wake_lock_destroy(void)
  */
 static void shmds_wake_lock_start(void)
 {
-	unsigned long flags;
+/* shmds del 17-4 -> */
+//	unsigned long flags;
 
-	spin_lock_irqsave(&shmds_wake_spinlock, flags);
-	if (!shmds_wake_lock_num) {
-		wake_lock(&shmds_wake_lock);
-	}
-	shmds_wake_lock_num++;
-	spin_unlock_irqrestore(&shmds_wake_spinlock, flags);
+//	spin_lock_irqsave(&shmds_wake_spinlock, flags);
+//	if (!shmds_wake_lock_num) {
+//		wake_lock(&shmds_wake_lock);
+//	}
+//	shmds_wake_lock_num++;
+//	spin_unlock_irqrestore(&shmds_wake_spinlock, flags);
+/* shmds del 17-4 <- */
 
 	return;
 }
@@ -171,17 +173,19 @@ static void shmds_wake_lock_start(void)
  */
 static void shmds_wake_lock_end(void)
 {
-	unsigned long flags;
+/* shmds del 17-4 -> */
+//	unsigned long flags;
 
-	spin_lock_irqsave(&shmds_wake_spinlock, flags);
-	shmds_wake_lock_num--;
-	if (!shmds_wake_lock_num) {
-		wake_unlock(&shmds_wake_lock);
-	}
-	if (shmds_wake_lock_num < 0) {
-		shmds_wake_lock_num = 0;
-	}
-	spin_unlock_irqrestore(&shmds_wake_spinlock, flags);
+//	spin_lock_irqsave(&shmds_wake_spinlock, flags);
+//	shmds_wake_lock_num--;
+//	if (!shmds_wake_lock_num) {
+//		wake_unlock(&shmds_wake_lock);
+//	}
+//	if (shmds_wake_lock_num < 0) {
+//		shmds_wake_lock_num = 0;
+//	}
+//	spin_unlock_irqrestore(&shmds_wake_spinlock, flags);
+/* shmds del 17-4 <- */
 
 	return;
 }
@@ -3630,6 +3634,12 @@ static irqreturn_t inv_read_fifo(int irq, void *dev_id)
 			goto flush_fifo;
 		}
 /* shmds add 17-3 <- */
+/* shmds add 17-4 -> */
+	    if (fifo_count > bytes_per_datum)
+	    {
+	        usleep(1000);
+	    }
+/* shmds add 17-4 -> */
 		if (fifo_count < bytes_per_datum)
 			goto end_session;
 		if (fifo_count%2)

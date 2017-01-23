@@ -18,6 +18,9 @@
 static const unsigned char kmod_sha256_hash[][32] = {
 #include "shexfat.hash"
 #include "adsp-loader.hash"
+#ifndef CONFIG_MACH_DSN16
+#include "shvmware.hash"
+#endif /* CONFIG_MACH_DSN16 */
 };
 
 #endif /* SH_KMOD_SHA256_HASH__ */

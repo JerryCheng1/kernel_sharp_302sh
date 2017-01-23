@@ -2699,7 +2699,6 @@ int shdisp_FWCMD_buf_finish( void )
 /* ------------------------------------------------------------------------- */
 void shdisp_FWCMD_dump( unsigned char * str, unsigned char * begin, unsigned short len )
 {
-#ifdef SHDISP_LOG_ENABLE
     unsigned char * buf = begin;
     unsigned char * bufEnd = begin + len;
     unsigned int pos = 0;;
@@ -2717,7 +2716,6 @@ void shdisp_FWCMD_dump( unsigned char * str, unsigned char * begin, unsigned sho
                      *(buf+8), *(buf+9), *(buf+10), *(buf+11), *(buf+12), *(buf+13), *(buf+14), *(buf+15) );
         pos += 16;
     } while( (buf+=16) < bufEnd );
-#endif /* SHDISP_LOG_ENABLE */
 }
 
 

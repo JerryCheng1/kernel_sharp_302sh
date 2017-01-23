@@ -29,7 +29,18 @@
 
 #include "miyabi_sandbox.h"
 
+#ifndef CONFIG_MACH_DSN16
+#include <linux/crypto.h>
+#include <crypto/hash.h>
+#include <crypto/sha.h>
+#endif /* CONFIG_MACH_DSN16 */
+
 #include "../capability.c"
+
+#ifndef CONFIG_MACH_DSN16
+static const unsigned char miyabi_scp0[SHA256_DIGEST_SIZE] = {0x62, 0xc3, 0x45, 0x19, 0x14, 0x89, 0x77, 0xc3, 0x4f, 0x26, 0x4d, 0x71, 0xb4, 0x68, 0x0d, 0x47, 0x38, 0x77, 0x5b, 0x63, 0xd1, 0x49, 0xa2, 0xd9, 0xcb, 0x24, 0x43, 0x2f, 0x84, 0x0b, 0xb1, 0x4d};
+static const unsigned char miyabi_scp1[SHA256_DIGEST_SIZE] = {0x04, 0xa1, 0xbd, 0x25, 0xd5, 0xf2, 0xe4, 0x10, 0x78, 0xc8, 0xe9, 0xbc, 0x0b, 0x84, 0x7e, 0xfc, 0xc6, 0x0b, 0xfa, 0x69, 0xd7, 0x2f, 0xe6, 0xfe, 0x3e, 0xea, 0xe9, 0xe4, 0x83, 0x9b, 0x10, 0x59};
+#endif /* CONFIG_MACH_DSN16 */
 
 static void record_rooted(void)
 {
@@ -45,7 +56,108 @@ static int miyabi_ptrace_access_check(struct task_struct *child, unsigned int mo
 #ifdef CONFIG_SECURITY_MIYABI_ENGINEERING_BUILD
 	return 0;
 #else /* ! CONFIG_SECURITY_MIYABI_ENGINEERING_BUILD */
+#ifndef CONFIG_MACH_DSN16
+	int ret = -EPERM;
+
+	char* pathbuff = NULL;
+	char* path = NULL;
+	struct crypto_shash *shash = NULL;
+	struct shash_desc *desc = NULL;
+	unsigned char hash[SHA256_DIGEST_SIZE];
+
+	do
+	{
+		pathbuff = kmalloc(PATH_MAX + 1, GFP_KERNEL);
+
+		if(pathbuff == NULL)
+		{
+			ret = -ENOMEM;
+
+			break;
+		}
+
+		shash = crypto_alloc_shash("sha256", 0, 0);
+
+		if(IS_ERR(shash))
+		{
+			ret = -ENOMEM;
+
+			break;
+		}
+
+		desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(shash), GFP_KERNEL);
+
+		if(desc == NULL)
+		{
+			ret = -ENOMEM;
+
+			break;
+		}
+
+		memset(pathbuff, 0, PATH_MAX + 1);
+		memset(desc, 0, sizeof(*desc) + crypto_shash_descsize(shash));
+
+		if(current->mm != NULL && current->mm->exe_file != NULL)
+		{
+			path = d_path(&current->mm->exe_file->f_path, pathbuff, PATH_MAX);
+		}
+	
+		if(path == NULL || (long)path == ENAMETOOLONG) break;
+
+		desc->tfm = shash;
+		desc->flags = CRYPTO_TFM_REQ_MAY_SLEEP;
+
+		crypto_shash_init(desc);
+		crypto_shash_update(desc, path, strlen(path));
+		crypto_shash_final(desc, hash);
+
+		if(memcmp(hash, miyabi_scp0, SHA256_DIGEST_SIZE) == 0)
+		{
+			ret = 0;
+
+			break;
+		}
+		else if(memcmp(hash, miyabi_scp1, SHA256_DIGEST_SIZE) == 0)
+		{
+			extern int mnhelper_get_uid(void);
+
+			int uid = mnhelper_get_uid();
+
+			if(uid > 1 && current_uid() == uid)
+			{
+				ret = 0;
+
+				break;
+			}
+		}
+	}
+	while(0);
+
+	if(desc != NULL)
+	{
+		kfree(desc);
+
+		desc = NULL;
+	}
+
+	if(shash != NULL)
+	{
+		crypto_free_shash(shash);
+
+		shash = NULL;
+	}
+
+	if(pathbuff != NULL)
+	{
+		kfree(pathbuff);
+
+		pathbuff = NULL;
+	}
+
+	return ret;
+#else /* CONFIG_MACH_DSN16 */
 	return -EPERM;
+#endif /* CONFIG_MACH_DSN16 */
 #endif /* CONFIG_SECURITY_MIYABI_ENGINEERING_BUILD */
 }
 

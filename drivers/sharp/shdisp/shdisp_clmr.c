@@ -5039,25 +5039,19 @@ static void shdisp_workqueue_handler_clmr(struct work_struct* work)
 #endif /* SHDISP_DEBUG_PROCFS_FW_ERROR */
             }
             if((reg[3] & 0x08) == 0x08) {
-#ifdef SHDISP_LOG_ENABLE
                 int ret;
-#endif   /* SHDISP_LOG_ENABLE */
                 int cmdno = 0xFFFFFFFF;
                 unsigned char tempHeap[32];
                 memset(tempHeap, 0, 32);
-#ifdef SHDISP_LOG_ENABLE
                 ret = shdisp_SYS_variable_length_data_read(cmdno, tempHeap, 32);
                 SHDISP_ERR("INTSET1 bit3 handshake rtn=%d\n", ret);
- #ifdef SHDISP_RESET_LOG
+#ifdef SHDISP_RESET_LOG
                 err_code.mode = SHDISP_DBG_MODE_LINUX;
                 err_code.type = SHDISP_DBG_TYPE_CLMR_FW;
                 err_code.code = SHDISP_DBG_CODE_ASYNC_ERROR;
                 err_code.subcode = SHDISP_DBG_SUBCODE_NONE;
                 shdisp_dbg_api_err_output(&err_code, 0);
- #endif /* SHDISP_RESET_LOG */
-#else    /* SHDISP_LOG_ENABLE */
-                shdisp_SYS_variable_length_data_read(cmdno, tempHeap, 32);
-#endif   /* SHDISP_LOG_ENABLE */
+#endif /* SHDISP_RESET_LOG */
                 shdisp_clmr_reg_dump_logset();
             }
         }

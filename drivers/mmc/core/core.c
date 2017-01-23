@@ -1658,7 +1658,19 @@ void mmc_gate_clock(struct mmc_host *host)
 	WARN_ON(!host->ios.clock);
 
 	spin_lock_irqsave(&host->clk_lock, flags);
+#ifdef CONFIG_PM_EMMC_CUST_SH
+	if (!strncmp(mmc_hostname(host), HOST_MMC_MMC, sizeof(HOST_MMC_MMC))){
+		if (host->ios.clock)
+			host->clk_old = host->ios.clock;
+		else
+			pr_warn( "%s : %s : illegal clock status\n",
+				mmc_hostname(host), __func__ );
+	}
+	else
+		host->clk_old = host->ios.clock;
+#else  /* CONFIG_PM_EMMC_CUST_SH */
 	host->clk_old = host->ios.clock;
+#endif /* CONFIG_PM_EMMC_CUST_SH */
 	host->ios.clock = 0;
 	host->clk_gated = true;
 	spin_unlock_irqrestore(&host->clk_lock, flags);
